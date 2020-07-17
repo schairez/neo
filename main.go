@@ -12,17 +12,44 @@ package main
 // Delete an existing idea,todo,doing,done entry
 // DELETE /categories/12
 import (
+	"html/template"
 	"log"
 	"net/http"
+	"os"
 )
 
+const layoutDir = "templates/layouts"
+
+//Todo struct
+type Todo struct {
+	Title string
+	Done  bool
+}
+
+//TodoPageData struct
+type TodoPageData struct {
+	PageTitle string
+	Todos     []Todo
+}
+
 func home(w http.ResponseWriter, r *http.Request) {
-	// fmt.Fprintf(w, "<h1>Welcome To my awesome site</h1>")
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
-	w.Write([]byte("Hello from Snippetbox"))
+
+	tmpl := template.Must(template.ParseFiles("templates/layouts/layout.gohtml"))
+	data := TodoPageData{
+		PageTitle: "My TODO list",
+		Todos: []Todo{
+			{Title: "Task 1", Done: false},
+			{Title: "Task 2", Done: true},
+			{Title: "Task 3", Done: true},
+		},
+	}
+	tmpl.Execute(w, data)
+
+	// w.Write([]byte("Hello from Snippetbox"))
 
 }
 func createEntry(w http.ResponseWriter, r *http.Request) {
@@ -42,13 +69,13 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	port := "4000"
-
+	// port := "8000"
+	port := os.Getenv("PORT")
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/entry/create", createEntry)
-	log.Println("Starting server on :4000")
+	log.Println("Starting server on :8000")
 
 	err := http.ListenAndServe(":"+port, mux)
 	log.Fatal(err)
