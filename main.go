@@ -18,8 +18,6 @@ import (
 	"os"
 )
 
-const layoutDir = "templates/layouts"
-
 //Todo struct
 type Todo struct {
 	Title string
@@ -33,12 +31,12 @@ type TodoPageData struct {
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
+	log.Println("we here!")
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/layouts/layout.gohtml"))
 	data := TodoPageData{
 		PageTitle: "My TODO list",
 		Todos: []Todo{
@@ -47,11 +45,15 @@ func home(w http.ResponseWriter, r *http.Request) {
 			{Title: "Task 3", Done: true},
 		},
 	}
-	tmpl.Execute(w, data)
 
-	// w.Write([]byte("Hello from Snippetbox"))
+	if err := templates.ExecuteTemplate(w, "layout", data); err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	}
 
 }
+
 func createEntry(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", http.MethodPost)
@@ -68,16 +70,28 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func main() {
-	// port := "8000"
-	port := os.Getenv("PORT")
-	mux := http.NewServeMux()
+var layoutDir string = "frontend/templates/layouts"
+var staticDir string = "frontend/stylesheets"
+var templates = template.Must(template.ParseGlob(layoutDir + "/*.gohtml"))
 
+func main() {
+	// port := ""
+	port := os.Getenv("PORT")
+	log.Printf("port from osgetenv %v", port)
+	if port == "" {
+		port = "8080"
+	}
+	mux := http.NewServeMux()
+	fsCSS := http.FileServer(http.Dir(staticDir))
+	mux.Handle("/stylesheets/", http.StripPrefix("/stylesheets", fsCSS))
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/entry/create", createEntry)
-	log.Println("Starting server on :8000")
+	log.Printf("Starting server on :%v", port)
 
 	err := http.ListenAndServe(":"+port, mux)
-	log.Fatal(err)
+	if err != nil {
+		log.Fatal(err)
+
+	}
 
 }

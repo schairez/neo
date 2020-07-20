@@ -1,15 +1,7 @@
-
 FROM golang:latest AS builder
-
-
 LABEL maintainer="Sergio Chairez <schairezv@gmail.com>"
-
-
 WORKDIR /app 
-
 COPY go.mod .
-
-
 RUN go mod download
 COPY . . 
 ENV PORT 8000
@@ -25,8 +17,7 @@ CMD [ "./neo" ]
 #     GOARCH=amd64
 
 
-
-
+# ENTRYPOINT go run main.go
 
 
 
