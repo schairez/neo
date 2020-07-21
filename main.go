@@ -70,8 +70,8 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 
 }
 
-var layoutDir string = "frontend/templates/layouts"
-var staticDir string = "frontend/stylesheets"
+var layoutDir string = "client/templates/layouts"
+var staticDir string = "client/static"
 var templates = template.Must(template.ParseGlob(layoutDir + "/*.gohtml"))
 
 func main() {
@@ -81,9 +81,10 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	mux := http.NewServeMux()
 	fsCSS := http.FileServer(http.Dir(staticDir))
-	mux.Handle("/stylesheets/", http.StripPrefix("/stylesheets", fsCSS))
+	mux := http.NewServeMux()
+
+	mux.Handle("/static/", http.StripPrefix("/static", fsCSS))
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/entry/create", createEntry)
 	log.Printf("Starting server on :%v", port)
