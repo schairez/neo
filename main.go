@@ -16,7 +16,34 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 )
+
+type neuteredFileSystem struct {
+	fs http.FileSystem
+}
+
+func (nfs neuteredFileSystem) Open(path string) (http.File, error) {
+	f, err := nfs.fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := f.Stat()
+	if s.IsDir() {
+		index := filepath.Join(path, "index.gohtml")
+		if _, err := nfs.fs.Open(index); err != nil {
+			closeErr := f.Close()
+			if closeErr != nil {
+				return nil, closeErr
+			}
+
+			return nil, err
+		}
+	}
+
+	return f, nil
+}
 
 //Todo struct
 type Todo struct {
@@ -30,12 +57,23 @@ type TodoPageData struct {
 	Todos     []Todo
 }
 
-func home(w http.ResponseWriter, r *http.Request) {
-	log.Println("we here!")
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
+func loadPage(wr http.ResponseWriter, name string, data interface{}) {
+	if err := templates.ExecuteTemplate(wr, name, data); err != nil {
+		log.Println(err.Error())
+		http.Error(wr, err.Error(), http.StatusInternalServerError)
+
 	}
+
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+
+	log.Println(r.URL.Path)
+
+	// if r.URL.Path != "/" {
+	// 	http.NotFound(w, r)
+	// 	return
+	// }
 
 	data := TodoPageData{
 		PageTitle: "My TODO list",
@@ -46,20 +84,20 @@ func home(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	if err := templates.ExecuteTemplate(w, "layout", data); err != nil {
-		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	loadPage(w, "index", data)
 
-	}
+}
+
+func aboutHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.URL.Path)
+	loadPage(w, "about", nil)
 
 }
 
 func createEntry(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", http.MethodPost)
-
 		http.Error(w, "Method Not Allowed", 405)
-
 		// w.Write([]byte("Method Not Allowed"))
 		return
 
@@ -70,22 +108,24 @@ func createEntry(w http.ResponseWriter, r *http.Request) {
 
 }
 
-var layoutDir string = "client/templates/layouts"
-var staticDir string = "client/static"
-var templates = template.Must(template.ParseGlob(layoutDir + "/*.gohtml"))
+var tplDir string = "client/templates"
+
+var templates = template.Must(template.ParseGlob(tplDir + "/*.gohtml"))
 
 func main() {
-	// port := ""
 	port := os.Getenv("PORT")
-	log.Printf("port from osgetenv %v", port)
+	log.Printf("port from osgetenv %v\n", port)
 	if port == "" {
 		port = "8080"
 	}
-	fsCSS := http.FileServer(http.Dir(staticDir))
+
 	mux := http.NewServeMux()
 
-	mux.Handle("/static/", http.StripPrefix("/static", fsCSS))
-	mux.HandleFunc("/", home)
+	fileServer := http.FileServer(neuteredFileSystem{http.Dir("./client")})
+	mux.Handle("client", http.NotFoundHandler())
+	mux.Handle("/client/", http.StripPrefix("/client", fileServer))
+	mux.HandleFunc("/", indexHandler)
+	mux.HandleFunc("/about", aboutHandler)
 	mux.HandleFunc("/entry/create", createEntry)
 	log.Printf("Starting server on :%v", port)
 
