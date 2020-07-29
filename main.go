@@ -30,9 +30,6 @@ import (
 	// "github.com/markbates/goth/providers/discord"
 )
 
-// const githubClientID = "db5cce4a188f854c1cc0"
-// const githubClientSecret = "d2f10479ea5f09fdada8f9840a0676a98a74a181"
-
 // Config struct
 type Config struct {
 	Security struct {
