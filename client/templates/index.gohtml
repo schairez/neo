@@ -4,6 +4,12 @@
 {{ template "header" . }}
 
 
+    
+    <p><a href="/auth?provider=github">Log in with Github</a></p>
+      <p><a href="/auth?provider=facebook">Log in with Facebook</a></p>
+    <p><a href="/auth?provider=google">Log in with Google</a></p>
+
+
 <h1>{{.PageTitle}}</h1>
 <ul>
     {{range .Todos}}

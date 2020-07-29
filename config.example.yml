@@ -1,0 +1,15 @@
+security:
+  oauth2:
+    github:
+      clientId: fakeaid3454534
+      clientSecret: fakeasecret123
+    google:
+      clientId: fakebid345452343
+      clientSecret: fakebsecret123
+    discord:
+      clientId: fakecid243543
+      clientSecret: fakecsecret123
+
+server:
+  host: localhost
+  port: 8000
