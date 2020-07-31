@@ -1,20 +1,21 @@
 CREATE TABLE IF NOT EXISTS users (
         id BIGSERIAL PRIMARY KEY,
-        user_name VARCHAR(32) UNIQUE NOT NULL,
+        -- user_name VARCHAR(32) UNIQUE NOT NULL,
         auth_provider VARCHAR(100) NOT NULL,
-        -- pass_key VARCHAR(64) NOT NULL,
-        --hash value here?
-        first_name CHAR(64) NOT NULL,
-        last_name CHAR(64) NOT NULL,
+        auth_id VARCHAR(100) NOT NULL,
+        name TEXT DEFAULT NULL,
+        first_name TEXT DEFAULT NULL,
+        last_name TEXT DEFAULT NULL,
         email VARCHAR(100) NOT NULL,
         created_at TIMESTAMP WITH TIMEZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NOT NULL
+        updated_at TIMESTAMP WITH TIMEZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE UNIQUE INDEX oauth_users_idx ON users(auth_provider, auth_id);
 CREATE TABLE IF NOT EXISTS notebooks (
         id BIGSERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         description TEXT,
-        public BOOLEAN,
+        public BOOLEAN NOT NULL DEFAULT FALSE,
         color VARCHAR(30),
         user_id BIGINT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
